@@ -2,8 +2,6 @@ import { useState, useMemo } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns'
 import { nl } from 'date-fns/locale'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { useDraggable } from '@dnd-kit/core'
 
 import { useAuthContext } from '../context/AuthContext'
 import { useBook } from '../hooks/useBooks'
@@ -14,7 +12,6 @@ import { Layout } from '../components/layout/Layout'
 import { LoadingSpinner } from '../components/common/LoadingSpinner'
 import { Button } from '../components/common/Button'
 import { Modal } from '../components/common/Modal'
-import { Badge } from '../components/common/Badge'
 
 import { TransactionItem } from '../components/transactions/TransactionItem'
 import { TransactionForm } from '../components/transactions/TransactionForm'
@@ -26,31 +23,8 @@ import { InviteForm } from '../components/books/InviteForm'
 import { MonthlyLineChart } from '../components/charts/MonthlyLineChart'
 import { CategoryBarChart } from '../components/charts/CategoryBarChart'
 
+import { DndContainer, DraggableItem } from '../components/dnd/DndContainer'
 import { assignCategory } from '../services/transactionService'
-
-// Draggable wrapper for TransactionItem
-function DraggableTransaction({ transaction, bookId, onEdit, categories }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: transaction.id,
-    data: { transaction },
-  })
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-40' : ''}`}
-    >
-      <TransactionItem
-        transaction={transaction}
-        bookId={bookId}
-        onEdit={onEdit}
-        categories={categories}
-      />
-    </div>
-  )
-}
 
 export function BookDetailPage() {
   const { bookId } = useParams()
@@ -60,16 +34,14 @@ export function BookDetailPage() {
   const { categories, loading: catLoading } = useCategories(bookId)
 
   const [selectedMonth, setSelectedMonth] = useState(new Date())
-  const [activeTab, setActiveTab] = useState('transactions') // 'transactions' | 'categories' | 'charts'
+  // const [activeTab, setActiveTab] = useState('transactions') // 'transactions' | 'categories' | 'charts'
+  const [activeTab, setActiveTab] = useState('overview')
   const [showTxForm, setShowTxForm] = useState(false)
   const [showCatForm, setShowCatForm] = useState(false)
   const [showBookForm, setShowBookForm] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [editTx, setEditTx] = useState(null)
   const [editCat, setEditCat] = useState(null)
-  const [activeDragTx, setActiveDragTx] = useState(null)
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const monthStart = startOfMonth(selectedMonth)
   const monthEnd = endOfMonth(selectedMonth)
@@ -90,16 +62,8 @@ export function BookDetailPage() {
   }, [transactions])
 
   async function handleDragEnd({ active, over }) {
-    setActiveDragTx(null)
     if (!over) return
-    const transactionId = active.id
-    const categoryId = over.id
-    await assignCategory(bookId, transactionId, categoryId)
-  }
-
-  function handleDragStart({ active }) {
-    const tx = transactions.find((t) => t.id === active.id)
-    setActiveDragTx(tx ?? null)
+    await assignCategory(bookId, active.id, over.id)
   }
 
   if (bookLoading) return <Layout><LoadingSpinner /></Layout>
@@ -153,18 +117,16 @@ export function BookDetailPage() {
       {/* Tabs */}
       <div className="flex gap-1 mt-6 mb-4 bg-slate-100 p-1 rounded-lg w-fit">
         {[
-          { key: 'transactions', label: 'Transacties' },
-          { key: 'categories', label: 'Categorieën' },
+          { key: 'overview', label: 'Overzicht' },
           { key: 'charts', label: 'Grafieken' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? 'bg-white text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === tab.key
+              ? 'bg-white text-indigo-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-800'
+              }`}
           >
             {tab.label}
           </button>
@@ -174,52 +136,27 @@ export function BookDetailPage() {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <>
-          {/* Transactions tab */}
-          {activeTab === 'transactions' && (
-            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              <div className="bg-white rounded-xl border border-slate-200">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                  <span className="font-medium text-slate-700 text-sm">
-                    {monthTransactions.length} transacties
-                  </span>
-                  <Button className="text-xs px-3 py-1.5" onClick={() => { setEditTx(null); setShowTxForm(true) }}>
-                    + Toevoegen
-                  </Button>
-                </div>
-
-                {monthTransactions.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 text-sm">
-                    Geen transacties in {format(selectedMonth, 'MMMM', { locale: nl })}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-50">
-                    {monthTransactions.map((tx) => (
-                      <DraggableTransaction
-                        key={tx.id}
-                        transaction={tx}
-                        bookId={bookId}
-                        onEdit={(t) => { setEditTx(t); setShowTxForm(true) }}
-                        categories={categories}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <DragOverlay>
-                {activeDragTx && (
-                  <div className="bg-white border border-indigo-300 rounded-lg px-4 py-2 shadow-lg text-sm opacity-90">
-                    {activeDragTx.description || 'Transactie'} — €{activeDragTx.amount.toFixed(2)}
-                  </div>
-                )}
-              </DragOverlay>
-            </DndContext>
+        /*
+         * Single DndContainer wraps both the transactions tab and the categories tab.
+         * This means draggables and droppables from both tabs share the same context,
+         * so even though only one tab is visible at a time the drag can still target
+         * categories that are rendered (even if off-screen / hidden).
+         *
+         * We keep both tab contents mounted at all times (display:none when inactive)
+         * so their droppable registrations stay alive during a drag.
+         */
+        <DndContainer onDragEnd={handleDragEnd}
+          renderOverlay={(data) => (
+            <div className="bg-white border border-indigo-300 rounded-lg px-4 py-2 shadow-lg text-sm opacity-90">
+              {data.transaction?.description || 'Transactie'} — €{data.transaction?.amount?.toFixed(2)}
+            </div>
           )}
+        >
+          {/* Overview tab */}
+          <div className={activeTab === 'overview' ? '' : 'hidden'}>
 
-          {/* Categories tab */}
-          {activeTab === 'categories' && (
-            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            {/* Categories */}
+            <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500">
                   Sleep transacties naar een categorie om ze te koppelen
@@ -247,25 +184,47 @@ export function BookDetailPage() {
                   ))}
                 </div>
               )}
+            </div>
 
-              <DragOverlay>
-                {activeDragTx && (
-                  <div className="bg-white border border-indigo-300 rounded-lg px-4 py-2 shadow-lg text-sm">
-                    {activeDragTx.description || 'Transactie'} — €{activeDragTx.amount.toFixed(2)}
-                  </div>
-                )}
-              </DragOverlay>
-            </DndContext>
-          )}
+            {/* Transactions */}
+            <div className="bg-white rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                <span className="font-medium text-slate-700 text-sm">
+                  {monthTransactions.length} transacties
+                </span>
+                <Button className="text-xs px-3 py-1.5" onClick={() => { setEditTx(null); setShowTxForm(true) }}>
+                  + Toevoegen
+                </Button>
+              </div>
 
-          {/* Charts tab (nice-to-have 2.4) */}
+              {monthTransactions.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 text-sm">
+                  Geen transacties in {format(selectedMonth, 'MMMM', { locale: nl })}
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-50">
+                  {monthTransactions.map((tx) => (
+                    <DraggableItem key={tx.id} id={tx.id} data={{ transaction: tx }}>
+                      <TransactionItem
+                        transaction={tx}
+                        bookId={bookId}
+                        onEdit={(tx) => { setEditTx(tx); setShowTxForm(true) }}
+                        categories={categories}
+                      />
+                    </DraggableItem>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {activeTab === 'charts' && (
             <div className="flex flex-col gap-4">
               <MonthlyLineChart transactions={monthTransactions} selectedMonth={selectedMonth} />
               <CategoryBarChart transactions={transactions} categories={categories} />
             </div>
           )}
-        </>
+        </DndContainer>
       )}
 
       {/* Modals */}

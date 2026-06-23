@@ -12,13 +12,28 @@ export function CategoryForm({ bookId, category, onClose }) {
   const [endDate, setEndDate] = useState(
     category?.endDate ? category.endDate.toISOString().split('T')[0] : ''
   )
-  const [error, setError] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [budgetError, setBudgetError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!name.trim()) { setError('Naam is verplicht'); return }
-    if (!maxBudget || Number(maxBudget) <= 0) { setError('Voer een geldig budget in'); return }
+
+    // Reset errors
+    setNameError('')
+    setBudgetError('')
+
+    let valid = true
+    if (!name.trim()) {
+      setNameError('Naam is verplicht')
+      valid = false
+    }
+    if (!maxBudget || Number(maxBudget) <= 0) {
+      setBudgetError('Voer een geldig budget in')
+      valid = false
+    }
+    if (!valid) return
+
     setLoading(true)
     try {
       const data = { name, maxBudget: Number(maxBudget), color, endDate: endDate || null }
@@ -29,7 +44,7 @@ export function CategoryForm({ bookId, category, onClose }) {
       }
       onClose()
     } catch (err) {
-      setError(err.message)
+      setNameError(err.message)
     } finally {
       setLoading(false)
     }
@@ -42,7 +57,7 @@ export function CategoryForm({ bookId, category, onClose }) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Boodschappen"
-        error={error}
+        error={nameError}
       />
       <Input
         label="Maximaal budget (€) *"
@@ -52,6 +67,7 @@ export function CategoryForm({ bookId, category, onClose }) {
         value={maxBudget}
         onChange={(e) => setMaxBudget(e.target.value)}
         placeholder="500.00"
+        error={budgetError}
       />
       <Input
         label="Einddatum (optioneel)"
