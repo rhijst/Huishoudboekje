@@ -22,7 +22,7 @@ export function TransactionItem({ transaction, bookId, onEdit, categories }) {
     <div className="flex items-center gap-3 py-3 px-4 hover:bg-slate-50 rounded-lg group">
       <div
         className="w-2 h-2 rounded-full shrink-0"
-        style={{ backgroundColor: category?.color ?? (transaction.type === 'income' ? '#22c55e' : '#ef4444') }}
+        style={{ backgroundColor: category?.color ?? "#979797" }}
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-800 truncate">

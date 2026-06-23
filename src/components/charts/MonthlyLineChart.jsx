@@ -22,11 +22,11 @@ export function MonthlyLineChart({ transactions, selectedMonth }) {
       (t) => format(t.date, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
     )
     const income = dayTransactions
-      .filter((t) => t.type === 'income')
-      .reduce((s, t) => s + t.amount, 0)
+      .filter((tx) => tx.type === 'income')
+      .reduce((sum, tx) => sum + tx.amount, 0)
     const expense = dayTransactions
-      .filter((t) => t.type === 'expense')
-      .reduce((s, t) => s + t.amount, 0)
+      .filter((tx) => tx.type === 'expense')
+      .reduce((sum, tx) => sum + tx.amount, 0)
     return { day: dayStr, Inkomsten: income, Uitgaven: expense }
   })
 
