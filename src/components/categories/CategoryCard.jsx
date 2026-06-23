@@ -50,11 +50,16 @@ export function CategoryCard({ category, bookId, spent, onEdit }) {
             </span>
           </div>
 
-          {category.endDate && (
-            <p className="text-xs text-slate-400">
+          {category.endDate ? (
+            <p className="text-xs text-slate-400 mb-2">
               Einddatum: {format(category.endDate, 'd MMMM yyyy', { locale: nl })}
             </p>
-          )}
+          ) : (
+              <div>
+                <br />
+              </div>
+            )
+          }
 
           {isDragOver && (
             <p className="text-xs text-indigo-600 font-medium text-center">Laat los om te koppelen</p>
