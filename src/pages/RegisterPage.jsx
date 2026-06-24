@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../firebase/firebase'
 import { useAuth } from '../hooks/useAuth'
 import { Input } from '../components/common/Input'
 import { Button } from '../components/common/Button'
@@ -23,14 +21,7 @@ export function RegisterPage() {
       return
     }
     setLocalError('')
-    const newUser = await register(email, password, displayName)
-    // Store user profile so invite lookup works
-    if (newUser) {
-      await setDoc(doc(db, 'users', newUser.uid), {
-        email: newUser.email,
-        displayName: displayName,
-      })
-    }
+    await register(email, password, displayName)
   }
 
   return (
