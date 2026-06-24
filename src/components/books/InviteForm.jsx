@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { findUserByEmail } from '../../services/userService'
+import { useState, useEffect } from 'react'
+import { findUserByEmail, findUsersByIds } from '../../services/userService'
 import { addMember, removeMember } from '../../services/bookService'
 import { Input } from '../common/Input'
 import { Button } from '../common/Button'
@@ -9,6 +9,11 @@ export function InviteForm({ book }) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [memberProfiles, setMemberProfiles] = useState({})
+
+  useEffect(() => {
+    findUsersByIds(book.memberIds).then(setMemberProfiles)
+  }, [book.memberIds])
 
   async function handleInvite(e) {
     e.preventDefault()
@@ -60,7 +65,7 @@ export function InviteForm({ book }) {
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Deelnemers ({book.memberIds.length})</p>
         {book.memberIds.map((id) => (
           <div key={id} className="flex items-center justify-between py-1">
-            <span className="text-sm text-slate-700 font-mono">{id.slice(0, 12)}…</span>
+            <span className="text-sm text-slate-700">{memberProfiles[id]?.email ?? id.slice(0, 12) + '…'}</span>
             <div className="flex items-center gap-2">
               {id === book.ownerId && <Badge color="indigo">Eigenaar</Badge>}
               {id !== book.ownerId && (

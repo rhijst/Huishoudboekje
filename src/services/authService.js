@@ -5,7 +5,8 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth'
-import { auth } from '../firebase/firebase'
+import { doc, setDoc } from 'firebase/firestore'
+import { auth, db } from '../firebase/firebase'
 
 export function subscribeToAuthState(callback) {
   return onAuthStateChanged(auth, callback)
@@ -14,6 +15,7 @@ export function subscribeToAuthState(callback) {
 export async function register(email, password, displayName) {
   const { user } = await createUserWithEmailAndPassword(auth, email, password)
   await updateProfile(user, { displayName })
+  await setDoc(doc(db, 'users', user.uid), { email: user.email, displayName })
   return user
 }
 
