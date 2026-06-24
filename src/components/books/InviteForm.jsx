@@ -1,11 +1,5 @@
 import { useState } from 'react'
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-} from 'firebase/firestore'
-import { db } from '../../firebase/firebase'
+import { findUserByEmail } from '../../services/userService'
 import { addMember, removeMember } from '../../services/bookService'
 import { Input } from '../common/Input'
 import { Button } from '../common/Button'
@@ -21,15 +15,11 @@ export function InviteForm({ book }) {
     setError('')
     setLoading(true)
     try {
-      // Look up user by email in the 'users' collection (populated on registration)
-      const usersRef = collection(db, 'users')
-      const q = query(usersRef, where('email', '==', email.trim()))
-      const snap = await getDocs(q)
-      if (snap.empty) {
+      const invitedUser = await findUserByEmail(email)
+      if (!invitedUser) {
         setError('Geen gebruiker gevonden met dit e-mailadres')
         return
       }
-      const invitedUser = snap.docs[0]
       if (book.memberIds.includes(invitedUser.id)) {
         setError('Deze gebruiker is al lid')
         return
