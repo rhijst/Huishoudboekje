@@ -136,21 +136,21 @@ export function BookDetailPage() {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        /*
-         * Single DndContainer wraps both the transactions tab and the categories tab.
-         * This means draggables and droppables from both tabs share the same context,
-         * so even though only one tab is visible at a time the drag can still target
-         * categories that are rendered (even if off-screen / hidden).
-         *
-         * We keep both tab contents mounted at all times (display:none when inactive)
-         * so their droppable registrations stay alive during a drag.
-         */
         <DndContainer onDragEnd={handleDragEnd}
-          renderOverlay={(data) => (
-            <div className="bg-white border border-indigo-300 rounded-lg px-4 py-2 shadow-lg text-sm opacity-90">
-              {data.transaction?.description || 'Transactie'} — €{data.transaction?.amount?.toFixed(2)}
-            </div>
-          )}
+          renderOverlay={(data) => {
+            const t = data.transaction
+
+            return (
+              <div className="bg-white border border-indigo-300 rounded-md px-2 py-1 shadow-md text-xs max-w-[200px] truncate opacity-90">
+                <div className="truncate font-medium">
+                  {t?.description || 'Transactie'}
+                </div>
+                <div className="text-slate-500">
+                  €{t?.amount?.toFixed(2)}
+                </div>
+              </div>
+            )
+          }}
         >
           {/* Overview tab */}
           <div className={activeTab === 'overview' ? '' : 'hidden'}>
