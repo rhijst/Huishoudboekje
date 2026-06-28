@@ -23,7 +23,7 @@ import { InviteForm } from '../components/books/InviteForm'
 import { MonthlyLineChart } from '../components/charts/MonthlyLineChart'
 import { CategoryBarChart } from '../components/charts/CategoryBarChart'
 
-import { DndContainer, DraggableItem } from '../components/dnd/dndContainer'
+import { DndContainer, DraggableItem } from '../components/dnd/DragAndDropContainer'
 import { assignCategory } from '../services/transactionService'
 
 export function BookDetailPage() {

@@ -1,4 +1,4 @@
-import { DroppableArea } from '../dnd/DndContainer'
+import { DroppableArea } from '../dnd/DragAndDropContainer'
 import { ProgressBar } from '../common/ProgressBar'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
